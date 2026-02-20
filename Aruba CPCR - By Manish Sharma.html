@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aruba — Config Profiles Cleanup Review</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   THEME SYSTEM — Dark (default) / Gray / Light
+   ══════════════════════════════════════════ */
+:root, html[data-theme="dark"] {
+  --bg:        #060a0f;
+  --bg1:       #0b1118;
+  --bg2:       #0f1924;
+  --bg3:       #162030;
+  --border:    #1e3045;
+  --border2:   #2a4560;
+  --cyan:      #00d4ff;
+  --cyan-dim:  #0098c0;
+  --cyan-glow: rgba(0,212,255,0.15);
+  --teal:      #00ffcc;
+  --amber:     #f59e0b;
+  --red:       #ef4444;
+  --red-dim:   #b91c1c;
+  --green:     #10b981;
+  --purple:    #a78bfa;
+  --text:      #cbd5e1;
+  --text-dim:  #64748b;
+  --text-bright:#e2e8f0;
+  --mono:      'Space Mono', monospace;
+  --ui:        'Rajdhani', sans-serif;
+  --row-sep:       rgba(30,48,69,0.5);
+  --hover-row:     rgba(0,212,255,0.04);
+  --scanline-a:    rgba(0,20,40,0.30);
+  --scanline-b:    rgba(0,212,255,0.015);
+  --header-shadow: rgba(0,212,255,0.08);
+  --yes-bg:    rgba(16,185,129,0.08);
+  --no-bg:     rgba(239,68,68,0.08);
+}
+html[data-theme="gray"] {
+  --bg:        #1c2128;
+  --bg1:       #22272e;
+  --bg2:       #2d333b;
+  --bg3:       #373e47;
+  --border:    #444c56;
+  --border2:   #545d68;
+  --cyan:      #2db8d8;
+  --cyan-dim:  #1a91b0;
+  --cyan-glow: rgba(45,184,216,0.15);
+  --teal:      #20c99a;
+  --amber:     #e0a020;
+  --red:       #e05252;
+  --red-dim:   #a83333;
+  --green:     #26a87a;
+  --purple:    #9878e8;
+  --text:      #adbac7;
+  --text-dim:  #768390;
+  --text-bright:#cdd9e5;
+  --row-sep:       rgba(68,76,86,0.6);
+  --hover-row:     rgba(45,184,216,0.05);
+  --scanline-a:    rgba(0,0,0,0.12);
+  --scanline-b:    rgba(45,184,216,0.012);
+  --header-shadow: rgba(45,184,216,0.06);
+  --yes-bg:    rgba(38,168,122,0.09);
+  --no-bg:     rgba(224,82,82,0.09);
+}
+html[data-theme="light"] {
+  --bg:        #eef2f7;
+  --bg1:       #ffffff;
+  --bg2:       #f0f4f9;
+  --bg3:       #e2e8f1;
+  --border:    #c4d0dd;
+  --border2:   #9eb0c4;
+  --cyan:      #0077a3;
+  --cyan-dim:  #005a80;
+  --cyan-glow: rgba(0,119,163,0.10);
+  --teal:      #007a60;
+  --amber:     #a05a00;
+  --red:       #c81e1e;
+  --red-dim:   #991b1b;
+  --green:     #0d7a57;
+  --purple:    #6d28d9;
+  --text:      #374151;
+  --text-dim:  #6b7280;
+  --text-bright:#111827;
+  --row-sep:       rgba(180,196,212,0.6);
+  --hover-row:     rgba(0,119,163,0.05);
+  --scanline-a:    transparent;
+  --scanline-b:    transparent;
+  --header-shadow: rgba(0,0,0,0.06);
+  --yes-bg:    rgba(13,122,87,0.07);
+  --no-bg:     rgba(200,30,30,0.06);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 15px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 2px, var(--scanline-a) 2px, var(--scanline-a) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 60px, var(--scanline-b) 60px, var(--scanline-b) 61px);
+}
+
+/* ── HEADER ── */
+header {
+  position: relative; z-index: 10;
+  padding: 14px 32px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 1px 40px var(--header-shadow);
+}
+.logo { display: flex; align-items: center; gap: 14px; }
+.logo-icon {
+  width: 42px; height: 42px;
+  border: 1.5px solid var(--cyan);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 16px var(--cyan-glow), inset 0 0 12px var(--cyan-glow);
+}
+.logo-icon svg { width: 24px; height: 24px; fill: var(--cyan); }
+.logo-text h1 { font-size: 20px; font-weight: 700; color: var(--text-bright); letter-spacing: 1.5px; }
+.logo-text p  { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; font-family: var(--mono); }
+.header-right { display: flex; gap: 16px; align-items: center; }
+.meta-badge {
+  font-family: var(--mono); font-size: 11px; color: var(--cyan);
+  padding: 4px 10px; border: 1px solid var(--border2);
+  border-radius: 3px; background: rgba(0,212,255,0.05);
+}
+.theme-switcher { display: flex; gap: 4px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 3px; }
+.theme-btn {
+  font-family: var(--mono); font-size: 10px; padding: 3px 8px;
+  border: none; border-radius: 3px; cursor: pointer;
+  background: transparent; color: var(--text-dim); transition: all 0.2s; letter-spacing: 0.5px;
+}
+.theme-btn.active { background: var(--cyan); color: var(--bg); font-weight: 700; }
+.theme-btn:hover:not(.active) { color: var(--cyan); }
+
+/* ── MAIN ── */
+main { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 28px 32px; }
+
+/* ── UPLOAD ZONE ── */
+.upload-section { margin-bottom: 28px; }
+.section-label {
+  font-family: var(--mono); font-size: 11px; color: var(--cyan);
+  letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label::before { content: '//'; color: var(--text-dim); }
+
+.drop-zone {
+  border: 2px dashed var(--border2);
+  border-radius: 8px;
+  background: var(--bg1);
+  padding: 40px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--cyan);
+  background: var(--bg2);
+  box-shadow: 0 0 24px var(--cyan-glow);
+}
+.drop-zone-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.8; }
+.drop-zone-title { font-size: 18px; font-weight: 600; color: var(--text-bright); margin-bottom: 6px; }
+.drop-zone-sub { font-size: 13px; color: var(--text-dim); font-family: var(--mono); }
+.drop-zone-sub span { color: var(--cyan); }
+#file-input { display: none; }
+
+.file-info {
+  display: none;
+  align-items: center; gap: 12px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px 16px; margin-top: 12px;
+}
+.file-info.visible { display: flex; }
+.file-info-icon { font-size: 20px; }
+.file-info-name { font-family: var(--mono); font-size: 12px; color: var(--text-bright); }
+.file-info-size { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+
+/* ── STATUS ── */
+.status-bar {
+  display: none;
+  font-family: var(--mono); font-size: 12px;
+  padding: 10px 14px; border-radius: 4px;
+  margin-top: 12px; border-left: 3px solid;
+}
+.status-bar.info    { background: rgba(0,212,255,0.08); border-color: var(--cyan); color: var(--cyan); display: block; }
+.status-bar.success { background: rgba(16,185,129,0.08); border-color: var(--green); color: var(--green); display: block; }
+.status-bar.error   { background: rgba(239,68,68,0.08); border-color: var(--red); color: var(--red); display: block; }
+.status-bar.warning { background: rgba(245,158,11,0.08); border-color: var(--amber); color: var(--amber); display: block; }
+
+/* ── STATS PANEL ── */
+.stats-grid {
+  display: none;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stats-grid.visible { display: grid; }
+.stat-card {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 18px;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--border2); }
+.stat-label { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--text-bright); letter-spacing: -0.5px; }
+.stat-value.green { color: var(--green); }
+.stat-value.red   { color: var(--red); }
+.stat-value.cyan  { color: var(--cyan); }
+
+/* ── CONTROLS ── */
+.controls {
+  display: none;
+  align-items: center; gap: 12px;
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.controls.visible { display: flex; }
+.search-box {
+  flex: 1; min-width: 200px;
+  background: var(--bg1); border: 1px solid var(--border2);
+  border-radius: 4px; padding: 8px 12px;
+  font-family: var(--mono); font-size: 12px; color: var(--text);
+  outline: none; transition: border-color 0.2s;
+}
+.search-box:focus { border-color: var(--cyan); box-shadow: 0 0 8px var(--cyan-glow); }
+.search-box::placeholder { color: var(--text-dim); }
+.filter-btns { display: flex; gap: 4px; }
+.filter-btn {
+  font-family: var(--mono); font-size: 11px; padding: 7px 14px;
+  border: 1px solid var(--border2); border-radius: 4px;
+  background: var(--bg2); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.filter-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,212,255,0.08); }
+.filter-btn:hover:not(.active) { color: var(--text-bright); border-color: var(--border2); }
+.filter-btn.green.active { border-color: var(--green); color: var(--green); background: rgba(16,185,129,0.08); }
+.filter-btn.red.active   { border-color: var(--red);   color: var(--red);   background: rgba(239,68,68,0.08); }
+.export-btn {
+  font-family: var(--mono); font-size: 11px; padding: 7px 14px;
+  border: 1px solid var(--border2); border-radius: 4px;
+  background: var(--bg2); color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s;
+}
+.export-btn:hover { color: var(--amber); border-color: var(--amber); }
+
+/* ── TABLE ── */
+.table-wrap {
+  display: none;
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.table-wrap.visible { display: block; }
+.table-container { overflow-x: auto; max-height: 70vh; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead { position: sticky; top: 0; z-index: 2; }
+thead tr { background: var(--bg2); }
+th {
+  padding: 11px 16px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  text-align: left; border-bottom: 1px solid var(--border2);
+  white-space: nowrap; cursor: pointer; user-select: none;
+  transition: color 0.15s;
+}
+th:hover { color: var(--cyan); }
+th .sort-icon { margin-left: 4px; opacity: 0.4; font-size: 10px; }
+th.sorted .sort-icon { opacity: 1; color: var(--cyan); }
+tbody tr {
+  border-bottom: 1px solid var(--row-sep);
+  transition: background 0.12s;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--hover-row); }
+td {
+  padding: 9px 16px;
+  font-size: 14px; vertical-align: middle;
+}
+td.keyword-col {
+  font-family: var(--mono); font-size: 11px; color: var(--cyan);
+  white-space: nowrap;
+}
+td.name-col {
+  font-family: var(--mono); font-size: 12px; color: var(--text-bright);
+}
+td.match-col { text-align: center; width: 90px; }
+.badge-yes {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--yes-bg); color: var(--green);
+  border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 3px; padding: 3px 9px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+}
+.badge-no {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--no-bg); color: var(--red);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 3px; padding: 3px 9px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+}
+.row-num { color: var(--text-dim); font-family: var(--mono); font-size: 11px; min-width: 36px; }
+
+.no-results {
+  text-align: center;
+  padding: 60px 32px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.no-results-icon { font-size: 32px; margin-bottom: 12px; display: block; }
+
+/* ── NOTICE BANNER ── */
+.notice {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+  display: none;
+}
+.notice.visible { display: block; }
+.notice strong { color: var(--amber); }
+
+/* ── FOOTER ── */
+footer {
+  position: relative; z-index: 1;
+  text-align: center;
+  padding: 18px 32px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  margin-top: 40px;
+}
+footer a {
+  color: var(--cyan); text-decoration: none;
+  border-bottom: 1px solid var(--border2); padding-bottom: 1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+footer a:hover { color: var(--teal); border-color: var(--teal); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cyan-dim); }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div class="logo-text">
+      <h1>CONFIG PROFILES CLEANUP REVIEW</h1>
+      <p>HPE Aruba &nbsp;·&nbsp; Profile Usage Analyzer</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="meta-badge" id="result-count-badge" style="display:none">— profiles</div>
+    <div class="theme-switcher" id="theme-switcher">
+      <button class="theme-btn active" data-theme="dark">DARK</button>
+      <button class="theme-btn" data-theme="gray">GRAY</button>
+      <button class="theme-btn" data-theme="light">LIGHT</button>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main>
+
+  <!-- Upload -->
+  <div class="upload-section">
+    <div class="section-label">Upload Tech-Support Log</div>
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-title">Drop your tech-support.log here</div>
+      <div class="drop-zone-sub">or <span>click to browse</span> &nbsp;·&nbsp; Reads <span>show running-config</span> section</div>
+    </div>
+    <input type="file" id="file-input" accept=".log,.txt">
+    <div class="file-info" id="file-info">
+      <div class="file-info-icon">📄</div>
+      <div>
+        <div class="file-info-name" id="file-name"></div>
+        <div class="file-info-size" id="file-size"></div>
+      </div>
+    </div>
+    <div class="status-bar" id="status-bar"></div>
+  </div>
+
+  <!-- Notice -->
+  <div class="notice" id="notice">
+    <strong>⚠ Notice:</strong> This report is for the customer's review and action. HPE/Aruba Support is only providing information on the usage status of configuration profiles. Profiles marked <strong style="color:var(--red)">NO</strong> may be candidates for cleanup — please verify before removing.
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Profiles</div>
+      <div class="stat-value cyan" id="stat-total">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">In Use (YES)</div>
+      <div class="stat-value green" id="stat-yes">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Unused (NO)</div>
+      <div class="stat-value red" id="stat-no">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Usage Rate</div>
+      <div class="stat-value cyan" id="stat-pct">0%</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls" id="controls">
+    <input type="text" class="search-box" id="search-box" placeholder="Search keyword or profile name...">
+    <div class="filter-btns">
+      <button class="filter-btn active" data-filter="all">ALL</button>
+      <button class="filter-btn green" data-filter="YES">✓ YES</button>
+      <button class="filter-btn red"   data-filter="NO">✗ NO</button>
+    </div>
+    <button class="export-btn" id="export-btn">⬇ Export CSV</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap" id="table-wrap">
+    <div class="table-container">
+      <table id="results-table">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th class="sortable sorted" data-col="keyword">Config Profile <span class="sort-icon" id="sort-keyword">▲</span></th>
+            <th class="sortable" data-col="name">Profile Name <span class="sort-icon" id="sort-name">↕</span></th>
+            <th class="sortable" data-col="match" style="text-align:center">Match <span class="sort-icon" id="sort-match">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="results-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Copyright &copy; <a href="https://github.com/welcomemanish" target="_blank" rel="noopener">Manish Sharma</a>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════
+//  KEYWORD LIST (from Python script)
+// ═══════════════════════════════════════════════
+const KEYWORDS = [
+  "ip access-list geolocation","ip access-list eth","netdestination","aaa bandwidth-contract",
+  "ip access-list session","user-role","vlan-name","ip nexthop-list","crypto isakmp policy",
+  "mgmt-server primary-server","ntp server","cp-bandwidth-contract","aaa rfc-3576-server",
+  "aaa authentication mac","aaa authentication dot1x","aaa authentication-server ldap",
+  "aaa authentication-server tacacs","aaa authentication-server radius","scheduler-profile",
+  "aaa server-group","aaa profile","aaa authentication captive-portal","aaa authentication wispr",
+  "aaa authentication vpn","aaa authentication stateful-ntlm","aaa authentication stateful-kerberos",
+  "aaa authentication via auth-profile","aaa authentication via connection-profile",
+  "aaa authentication via web-auth","ids ap-classification-rule","ids management-profile",
+  "ids wms-general-profile","ids wms-local-system-profile","ucc","lc-cluster group-profile",
+  "ap regulatory-domain-profile","dump-auto-uploading-profile","ap wired-ap-profile",
+  "ap enet-link-profile","ap mesh-ht-ssid-profile","ap lldp med-network-policy-profile",
+  "ap mesh-cluster-profile","ap mesh-accesslist-profile","ap wifi-uplink-profile",
+  "ap multizone-profile","ap usb-acl-prof","iot radio-profile","dump-collection-profile",
+  "ap lldp profile","ap mesh-radio-profile","ap usb-profile","ap system-profile",
+  "ap wired-port-profile","gps service-profile","ids general-profile","ids rate-thresholds-profile",
+  "ids signature-profile","ids impersonation-profile","ids unauthorized-device-profile",
+  "ids signature-matching-profile","ids dos-profile","ids profile","rf dot11-60GHz-radio-profile",
+  "wlan 6ghz-rrm-ie-profile","rf arm-profile","rf ht-radio-profile","rf spectrum-profile",
+  "rf optimization-profile","rf event-thresholds-profile","rf am-scan-profile",
+  "rf dot11a-radio-profile","rf dot11g-radio-profile","rf dot11-6GHz-radio-profile",
+  "wlan rrm-ie-profile","wlan bcn-rpt-req-profile","wlan dot11r-profile","wlan tsm-req-profile",
+  "wlan ht-ssid-profile","wlan he-ssid-profile","wlan hotspot anqp-venue-name-profile",
+  "wlan hotspot anqp-nwk-auth-profile","wlan hotspot anqp-roam-cons-profile",
+  "wlan hotspot anqp-nai-realm-profile","wlan hotspot anqp-3gpp-nwk-profile",
+  "wlan hotspot h2qp-operator-friendly-name-profile","wlan hotspot h2qp-wan-metrics-profile",
+  "wlan hotspot h2qp-conn-capability-profile","wlan hotspot h2qp-op-cl-profile",
+  "wlan hotspot h2qp-osu-prov-list-profile","wlan hotspot anqp-ip-addr-avail-profile",
+  "wlan hotspot anqp-domain-name-profile","wlan edca-parameters-profile station",
+  "wlan edca-parameters-profile ap","wlan mu-edca-parameters-profile","wlan dot11k-profile",
+  "wlan ssid-profile","wlan virtual-ap","wlan traffic-management-profile","mgmt-server profile",
+  "ap authorization-profile","ap provisioning-profile","rf arm-rf-domain-profile",
+  "ap am-filter-profile","ap spectrum local-override","airmatch profile","ap-lacp-striping-ip",
+  "ap general-profile","ap deploy-profile","airslice-profile","ap-group","ap-name",
+  "airgroupprofile service","iot transportProfile","iot useTransportProfile",
+  "snmp-server host","ip probe"
+];
+
+// Sort keywords longest-first to avoid partial matches on shorter ones
+KEYWORDS.sort((a, b) => b.length - a.length);
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let allResults  = [];
+let filteredRes = [];
+let currentFilter = 'all';
+let currentSort = { col: 'keyword', dir: 1 };
+let selectedFile = null;
+
+// ═══════════════════════════════════════════════
+//  FILE UPLOAD HANDLING
+// ═══════════════════════════════════════════════
+const dropZone  = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const fileInfo  = document.getElementById('file-info');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+function handleFile(f) {
+  selectedFile = f;
+  document.getElementById('file-name').textContent = f.name;
+  document.getElementById('file-size').textContent = formatBytes(f.size);
+  fileInfo.classList.add('visible');
+  showStatus('info', `File loaded: ${f.name} (${formatBytes(f.size)}) — analyzing...`);
+  // Auto-start analysis
+  const reader = new FileReader();
+  reader.onload = e => parseLog(e.target.result);
+  reader.onerror = () => showStatus('error', 'Failed to read file.');
+  reader.readAsText(f, 'utf-8');
+}
+
+// Auto-analysis is triggered in handleFile()
+
+// ═══════════════════════════════════════════════
+//  PARSER
+// ═══════════════════════════════════════════════
+function parseLog(text) {
+  showStatus('info', 'Parsing log file...');
+
+  const lines = text.split(/\r?\n/);
+
+  // Find "show running-config" section
+  // Look for a line that contains "show running-config" (typical tech-support marker)
+  let startIdx = -1;
+  let endIdx   = lines.length;
+
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trim();
+    if (startIdx === -1) {
+      // Match "show running-config" section header (various formats in tech-support)
+      if (/^(show running-config|Running configuration:|\*+\s*show running-config)/i.test(l) ||
+          l === 'show running-config') {
+        startIdx = i + 1;
+      }
+    } else {
+      // End of section: next "show " command block or common separators
+      // Look for lines that look like another show command section
+      if (i > startIdx + 10 &&
+          (/^show\s+\w/i.test(l) ||
+           /^={5,}/.test(l) ||
+           /^\*{5,}/.test(l) ||
+           /^-{10,}/.test(l)) &&
+          !/^show running-config/i.test(l)) {
+        endIdx = i;
+        break;
+      }
+    }
+  }
+
+  let configLines;
+  if (startIdx === -1) {
+    // No explicit section found — try to use the entire file as running-config
+    showStatus('warning', 'Could not find "show running-config" section marker. Analyzing entire file...');
+    configLines = lines;
+  } else {
+    configLines = lines.slice(startIdx, endIdx);
+    showStatus('info', `Found running-config section: lines ${startIdx}–${endIdx} (${configLines.length} lines)`);
+  }
+
+  // Build line frequency map for quick lookup
+  // We need to count occurrences of a word/phrase across ALL config lines
+  const configText = configLines.join('\n');
+
+  // Count exact word occurrences (whole word)
+  function countOccurrences(word) {
+    // Escape for regex
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rx = new RegExp('\\b' + escaped + '\\b', 'gi');
+    const matches = configText.match(rx);
+    return matches ? matches.length : 0;
+  }
+
+  const results = [];
+
+  for (const line of configLines) {
+    for (const kw of KEYWORDS) {
+      // Try to match: keyword followed by optional space and quoted or unquoted next token
+      const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const rx = new RegExp('\\b' + escaped + '\\b\\s+(?:"([^"]+)"|(\\S+))', 'i');
+      const m = rx.exec(line);
+      if (m) {
+        const nextWord = m[1] !== undefined ? m[1] : m[2];
+        if (!nextWord) continue;
+        if (nextWord.toLowerCase() === 'default') continue;
+        const count = countOccurrences(nextWord);
+        const found = count >= 2 ? 'YES' : 'NO';
+        // Avoid duplicate (keyword + name) pairs
+        if (!results.some(r => r.keyword === kw && r.name === nextWord)) {
+          results.push({ keyword: kw, name: nextWord, match: found });
+        }
+      }
+    }
+  }
+
+  // VRRP matching
+  const vrrpNums   = new Set();
+  const vrouterNums = new Set();
+  for (const line of configLines) {
+    const mv = line.match(/^vrrp\s+(\d+)/);
+    if (mv) vrrpNums.add(mv[1]);
+    const mvr = line.match(/^Virtual Router\s+(\d+)/);
+    if (mvr) vrouterNums.add(mvr[1]);
+  }
+  for (const num of vrrpNums) {
+    results.push({
+      keyword: `vrrp ${num}`,
+      name: 'Virtual Router',
+      match: vrouterNums.has(num) ? 'YES' : 'NO'
+    });
+  }
+
+  if (results.length === 0) {
+    showStatus('error', 'No matching config profiles found. Ensure the file contains a "show running-config" section.');
+    return;
+  }
+
+  allResults = results;
+  currentFilter = 'all';
+  currentSort = { col: 'keyword', dir: 1 };
+
+  applyFilterSort();
+  renderStats();
+  showUI();
+  showStatus('success', `✓ Analysis complete — ${results.length} profile entries found across ${configLines.length} config lines.`);
+}
+
+// ═══════════════════════════════════════════════
+//  FILTER / SORT / RENDER
+// ═══════════════════════════════════════════════
+function applyFilterSort() {
+  const searchVal = (document.getElementById('search-box').value || '').toLowerCase();
+
+  filteredRes = allResults.filter(r => {
+    if (currentFilter !== 'all' && r.match !== currentFilter) return false;
+    if (searchVal) {
+      return r.keyword.toLowerCase().includes(searchVal) ||
+             r.name.toLowerCase().includes(searchVal);
+    }
+    return true;
+  });
+
+  // Sort
+  const { col, dir } = currentSort;
+  filteredRes.sort((a, b) => {
+    const va = a[col]; const vb = b[col];
+    return dir * va.localeCompare(vb);
+  });
+
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('results-tbody');
+  if (filteredRes.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="no-results"><span class="no-results-icon">🔍</span>No results match current filter</td></tr>`;
+    return;
+  }
+
+  const rows = filteredRes.map((r, i) => {
+    const badge = r.match === 'YES'
+      ? `<span class="badge-yes">✓ YES</span>`
+      : `<span class="badge-no">✗ NO</span>`;
+    return `<tr>
+      <td class="row-num">${i + 1}</td>
+      <td class="keyword-col">${escHtml(r.keyword)}</td>
+      <td class="name-col">${escHtml(r.name)}</td>
+      <td class="match-col">${badge}</td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = rows.join('');
+}
+
+function renderStats() {
+  const total = allResults.length;
+  const yes   = allResults.filter(r => r.match === 'YES').length;
+  const no    = total - yes;
+  const pct   = total ? Math.round(yes / total * 100) : 0;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-yes').textContent   = yes;
+  document.getElementById('stat-no').textContent    = no;
+  document.getElementById('stat-pct').textContent   = pct + '%';
+  document.getElementById('result-count-badge').textContent = `${total} profiles`;
+  document.getElementById('result-count-badge').style.display = '';
+}
+
+function showUI() {
+  document.getElementById('notice').classList.add('visible');
+  document.getElementById('stats-grid').classList.add('visible');
+  document.getElementById('controls').classList.add('visible');
+  document.getElementById('table-wrap').classList.add('visible');
+}
+
+// ═══════════════════════════════════════════════
+//  EVENT LISTENERS
+// ═══════════════════════════════════════════════
+// Search
+document.getElementById('search-box').addEventListener('input', applyFilterSort);
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    applyFilterSort();
+  });
+});
+
+// Sort headers
+document.querySelectorAll('th.sortable').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (currentSort.col === col) {
+      currentSort.dir *= -1;
+    } else {
+      currentSort = { col, dir: 1 };
+    }
+    // Update sort icons
+    document.querySelectorAll('th.sortable').forEach(t => {
+      t.classList.remove('sorted');
+      t.querySelector('.sort-icon').textContent = '↕';
+    });
+    th.classList.add('sorted');
+    th.querySelector('.sort-icon').textContent = currentSort.dir === 1 ? '▲' : '▼';
+    applyFilterSort();
+  });
+});
+
+// Export CSV
+document.getElementById('export-btn').addEventListener('click', () => {
+  const header = ['Config Profile', 'Profile Name', 'Match'];
+  const rows = filteredRes.map(r => [r.keyword, r.name, r.match].map(v => `"${v.replace(/"/g,'""')}"`).join(','));
+  const csv = [header.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `aruba-ccr-${Date.now()}.csv`;
+  a.click();
+});
+
+// ═══════════════════════════════════════════════
+//  THEME SWITCHER
+// ═══════════════════════════════════════════════
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.theme === theme);
+  });
+  try { localStorage.setItem('aruba-ccr-theme', theme); } catch(e) {}
+}
+
+document.getElementById('theme-switcher').addEventListener('click', e => {
+  const btn = e.target.closest('.theme-btn');
+  if (btn) applyTheme(btn.dataset.theme);
+});
+
+(function() {
+  let saved = 'dark';
+  try { saved = localStorage.getItem('aruba-ccr-theme') || 'dark'; } catch(e) {}
+  applyTheme(saved);
+})();
+
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+function showStatus(type, msg) {
+  const el = document.getElementById('status-bar');
+  el.className = 'status-bar ' + type;
+  el.textContent = msg;
+}
+
+function formatBytes(b) {
+  if (!b) return '0 B';
+  const units = ['B','KB','MB','GB'];
+  let i = 0;
+  while (b >= 1024 && i < units.length - 1) { b /= 1024; i++; }
+  return `${b.toFixed(1)} ${units[i]}`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

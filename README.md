@@ -1,6 +1,6 @@
 # Aruba CPCR — Config Profiles Cleanup Review
 
-A browser-based tool for HPE Aruba network engineers to analyze `tech-support.log` files and identify unused or unreferenced configuration profiles — helping to streamline and clean up controller configurations.
+A browser-based dashboard for engineers to analyze `tech-support.log` files and identify unused or unreferenced configuration profiles - helping to streamline and clean up controller configurations.
 
 > **No installation required.** Everything runs locally in your browser. No data is uploaded to any server.
 
